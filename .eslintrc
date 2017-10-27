@@ -1,0 +1,22 @@
+{
+    "parser": "babel-eslint",
+    "env": {
+        "node": true,
+        "es6": true,
+        "jest": true
+    },
+    "extends": "airbnb",
+    "rules": {
+      "strict": [0, "global"],
+      "require-yield": "off",
+      "indent": [2, "tab", { "SwitchCase": 1, "VariableDeclarator": 1 }],
+      "no-tabs": 0,
+      "no-use-before-define": ["error", "nofunc"],
+      "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }],
+      "no-param-reassign": ["error", { "props": false }],
+      "camelcase": ["error", { "properties": "always" }],
+      'object-curly-newline': ['error', {
+        ObjectExpression: { minProperties: 6, multiline: true, consistent: true }
+      }],
+    }
+}
