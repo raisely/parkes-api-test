@@ -30,7 +30,6 @@ async function errorHandler(ctx, next) {
 	try {
 		await next();
 	} catch (err) {
-		console.log('an error')
 		// eslint-disable-next-line no-console
 		console.error(err);
 	}
