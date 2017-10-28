@@ -2,6 +2,7 @@
 
 const Koa = require('koa');
 const KoaRouter = require('koa-router');
+const bodyParser = require('koa-bodyparser');
 
 const PORT = process.env.PORT || 3001;
 
@@ -20,17 +21,28 @@ api
 		ctx.body = ctx.request.body;
 		await next();
 	})
-	.post('/reflect/headers', async (ctx, next) => {
+	.all('/reflect/headers', async (ctx, next) => {
 		ctx.body = ctx.request.headers;
 		await next();
 	});
 
+async function errorHandler(ctx, next) {
+	try {
+		await next();
+	} catch (err) {
+		console.log('an error')
+		// eslint-disable-next-line no-console
+		console.error(err);
+	}
+}
+
 const app = new Koa();
 
-app.use(api.middleware());
-const server = app.listen(PORT).on('error', (err) => {
-	// eslint-disable-next-line no-console
-	console.error(err);
-});
+app
+	.use(errorHandler)
+	.use(bodyParser())
+	.use(api.middleware());
+
+const server = app.listen(PORT);
 
 module.exports = server;
