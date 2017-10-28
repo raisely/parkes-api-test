@@ -156,4 +156,4 @@ describe('my api', () => {
 
 © 2017 Agency Ventures
 
-Licensed under the KWPL license.  See [`LICENSE.md`](https://github.com/raisely/parkes-api-test/blob/master/LICENSE) for details.
+Licensed under the KWPL license.  See [`LICENSE.md`](https://github.com/raisely/parkes-api-test/blob/master/LICENSE.md) for details.
