@@ -2,9 +2,17 @@
 
 const server = require('./testServer');
 
+const chai = require('chai');
+const chaiSubset = require('chai-subset');
+const chaiSubsetJestDiff = require('chai-subset-jest-diff');
+
+chai.use(chaiSubset);
+chai.use(chaiSubsetJestDiff());
+const chaiExpect = chai.expect;
+
 const describeApi = require('../');
 
-const title = { title: 'Speaking of Earth' };
+const title = 'Speaking of Earth';
 const body = {
 	title,
 	authors: [
@@ -20,15 +28,19 @@ const rootBody = {
 };
 
 const deepPartial = {
-	authors: { name: 'Ken Saro-Wiwa' },
+	authors: [{ name: 'Ken Saro-Wiwa' }],
 };
 
 const headers = {
-	Client: 'Parkes Test',
+	client: 'Parkes Test',
 };
 
-function assert(res) {
-	expect(res.path).toEqual('/');
+function assertResponse(res) {
+	expect(res.req.path).toEqual('/');
+}
+
+function assertRoute(res, route) {
+	expect(route.name).toEqual('GET / (assert receives resolved route)');
 }
 
 function simpleApi() {
@@ -36,10 +48,11 @@ function simpleApi() {
 		{ path: '/' },
 		{ method: 'DELETE', path: '/' },
 		{ path: '/error', status: 400 },
-		{ method: 'POST', path: '/reflect/body', body, expect: deepPartial },
-		{ method: 'POST', path: '/reflect/body', _body: rootBody, _expect: { keywords } },
-		{ method: 'GET', path: '/reflect/headers', headers, expect: headers },
-		{ path: '/', assert },
+		{ method: 'POST', path: '/reflect/body', name: '(in data)', body, expect: deepPartial },
+		{ method: 'POST', path: '/reflect/body', name: '(raw)', _body: rootBody, _expect: { keywords } },
+		{ method: 'GET', path: '/reflect/headers', headers, _expect: headers },
+		{ name: '(assert receives response)', path: '/', assertResponse },
+		{ name: '(assert receives resolved route)', path: '/', assertRoute },
 	]);
 }
 function hooks() {
@@ -62,12 +75,12 @@ function hooks() {
 
 		// Assert afterAll was called at the end of the suite
 		afterAll(() => {
-			expect(hooks).toMatchObject({ afterAll: true });
+			expect(hooks).toMatchObject({ afterAll: true, after: true });
 		});
 
 		function assertHook(response, route) {
 			const expected = {};
-			expected[route._name] = true;
+			expected[route.name] = true;
 			expect(hooks).toMatchObject(expected);
 		}
 
@@ -75,7 +88,7 @@ function hooks() {
 			'api', server, [
 				{ path: '/', _name: 'beforeAll', assert: assertHook },
 				{ path: '/', _name: 'before', before: hookFn.before, assert: assertHook },
-				{ path: '/', _name: 'after', after: hookFn.after, assert: assertHook },
+				{ path: '/', _name: 'after', after: hookFn.after },
 			],
 			// eslint-disable-next-line comma-dangle
 			{ beforeAll: hookFn.beforeAll, afterAll: hookFn.afterAll }
@@ -84,30 +97,18 @@ function hooks() {
 }
 
 const path = '/reflect/body';
-const params = { path, body, expect: title };
+const params = { path, body, expect: { title }, headers };
 
-function functionArguments() {
-	const fnParams = {};
-	Object.keys(params).forEach((param) => {
-		fnParams[param] = () => param;
-	});
-
-	const rootPaths = {
-		path: fnParams.path,
-		_body: fnParams.body,
-		_expect: fnParams.expect,
-	};
-
-	describeApi('function arguments', server, [
-		Object.assign({ method: 'POST' }, fnParams),
-		Object.assign({ method: 'POST' }, rootPaths),
-	]);
+function assertHeaders(res) {
+	chaiExpect(res.headers).to.containSubset(headers);
 }
 
-function asyncFunctionArguments() {
+function testFunctionArguments(name, isAsync) {
 	const fnParams = {};
 	Object.keys(params).forEach((param) => {
-		fnParams[param] = async () => param;
+		fnParams[param] = isAsync ?
+			async () => params[param] :
+			() => params[param];
 	});
 
 	const rootPaths = {
@@ -116,13 +117,13 @@ function asyncFunctionArguments() {
 		_expect: fnParams.expect,
 	};
 
-	describeApi('async function arguments', server, [
-		Object.assign({ method: 'POST' }, fnParams),
-		Object.assign({ method: 'POST' }, rootPaths),
+	describeApi(name, server, [
+		Object.assign({ method: 'POST', name: '(wrapped)', assertHeaders }, fnParams),
+		Object.assign({ method: 'POST', name: '(raw)', assertHeaders }, rootPaths),
 	]);
 }
 
 simpleApi();
 hooks();
-functionArguments();
-asyncFunctionArguments();
+testFunctionArguments('function arguments', false);
+testFunctionArguments('async function arguments', true);
