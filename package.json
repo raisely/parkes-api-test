@@ -1,7 +1,7 @@
 {
-  "name": "parkes-test",
+  "name": "parkes-api-test",
   "version": "0.1.0",
-  "description": "Config based JSON API testing",
+  "description": "Concise JSON API testing",
   "main": "lib/describeApi.js",
   "scripts": {
     "test": "jest"
@@ -18,10 +18,22 @@
   },
   "keywords": [
     "jest",
+	"json",
+	"api",
     "test",
     "rest"
   ],
   "author": "Agency Ventures",
+  "contributors": [
+    {
+      "name": "Chris Jensen",
+      "email": "chris@agency.sc"
+    },
+	{
+      "name": "Paul Day",
+      "email": "paul@agency.sc"
+    },
+  ],
   "license": "KWPL",
   "bugs": {
     "url": "https://github.com/raisely/parkes-router/issues"

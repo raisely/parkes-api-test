@@ -1,4 +1,4 @@
-Parkes API Test lets you write concise, expressive JSON API tests.
+Concise JSON API tests for node 7.6.0+
 
 Parkes API Test is built for the Parkes framework, but has no dependencies on
 parkes or koa so you can use it to test any node server that is supported by
