@@ -78,7 +78,7 @@ All are optional except for `path`.
 | assert | | Custom method to assert something else about the route |
 
 Options marked * can be a (async) function in which case the return value of the function
-will be used. The functions are executed during test definition.
+will be used. The functions are evaluated during test execution.
 
 Jest groups tests by the same name together, this could lead to unexpected results, so
 if you are testing the same route more than once, you should use `note` to differentiate
