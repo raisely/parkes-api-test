@@ -29,6 +29,7 @@
   "homepage": "https://github.com/raisely/parkes-router#readme",
   "devDependencies": {
     "babel-eslint": "^8.0.1",
+    "body-parser": "^1.18.2",
     "eslint": "^4.9.0",
     "eslint-config-airbnb": "^16.1.0",
     "eslint-plugin-import": "^2.8.0",
@@ -36,6 +37,14 @@
     "eslint-plugin-react": "^7.4.0",
     "jest": "^21.2.1",
     "koa": "^2.3.0",
+    "koa-bodyparser": "^4.2.0",
     "koa-router": "^7.2.1"
+  },
+  "dependencies": {
+    "chai": "^4.1.2",
+    "chai-subset": "^1.6.0",
+    "chai-subset-jest-diff": "file:../chai-subset-jest-diff",
+    "lodash": "^4.17.4",
+    "supertest": "^3.0.0"
   }
 }
