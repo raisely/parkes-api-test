@@ -4,7 +4,9 @@
   "description": "Concise JSON API testing",
   "main": "lib/describeApi.js",
   "scripts": {
-    "test": "jest"
+    "test": "npm run jest && npm run mocha",
+    "jest": "jest",
+    "mocha": "mocha"
   },
   "jest": {
     "testEnvironment": "node"
@@ -18,8 +20,8 @@
   },
   "keywords": [
     "jest",
-	"json",
-	"api",
+    "json",
+    "api",
     "test",
     "rest"
   ],
@@ -29,10 +31,10 @@
       "name": "Chris Jensen",
       "email": "chris@agency.sc"
     },
-	{
+    {
       "name": "Paul Day",
       "email": "paul@agency.sc"
-    },
+    }
   ],
   "license": "KWPL",
   "bugs": {
@@ -50,7 +52,8 @@
     "jest": "^21.2.1",
     "koa": "^2.3.0",
     "koa-bodyparser": "^4.2.0",
-    "koa-router": "^7.2.1"
+    "koa-router": "^7.2.1",
+    "mocha": "^4.0.1"
   },
   "dependencies": {
     "chai": "^4.1.2",

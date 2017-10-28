@@ -12,6 +12,9 @@ const chaiExpect = chai.expect;
 
 const describeApi = require('../');
 
+// Support jest or mocha
+const afterAll = global.afterAll || global.after;
+
 const title = 'Speaking of Earth';
 const body = {
 	title,
@@ -36,11 +39,11 @@ const headers = {
 };
 
 function assertResponse(res) {
-	expect(res.req.path).toEqual('/');
+	chaiExpect(res.req.path).to.equal('/');
 }
 
 function assertRoute(res, route) {
-	expect(route.name).toEqual('GET / (assert receives resolved route)');
+	chaiExpect(route.name).to.equal('GET / (assert receives resolved route)');
 }
 
 function simpleApi() {
@@ -55,7 +58,8 @@ function simpleApi() {
 		{ name: '(assert receives resolved route)', path: '/', assertRoute },
 	]);
 }
-function hooks() {
+
+function testHooks() {
 	describe('hooks', () => {
 		let hooks;
 
@@ -69,26 +73,26 @@ function hooks() {
 			};
 		});
 
-		hookFn.afterAll = function afterAll() {
+		hookFn.afterAll = function afterAllHook() {
 			hooks.afterAll = true;
 		};
 
 		// Assert afterAll was called at the end of the suite
 		afterAll(() => {
-			expect(hooks).toMatchObject({ afterAll: true, after: true });
+			chaiExpect(hooks).to.containSubset({ afterAll: true, after: true });
 		});
 
 		function assertHook(response, route) {
 			const expected = {};
 			expected[route.name] = true;
-			expect(hooks).toMatchObject(expected);
+			chaiExpect(hooks).to.containSubset(expected);
 		}
 
 		describeApi(
 			'api', server, [
-				{ path: '/', _name: 'beforeAll', assert: assertHook },
-				{ path: '/', _name: 'before', before: hookFn.before, assert: assertHook },
-				{ path: '/', _name: 'after', after: hookFn.after },
+				{ path: '/', name: 'beforeAll', assert: assertHook },
+				{ path: '/', name: 'before', before: hookFn.before, assert: assertHook },
+				{ path: '/', name: 'after', after: hookFn.after },
 			],
 			// eslint-disable-next-line comma-dangle
 			{ beforeAll: hookFn.beforeAll, afterAll: hookFn.afterAll }
@@ -124,6 +128,6 @@ function testFunctionArguments(name, isAsync) {
 }
 
 simpleApi();
-hooks();
+testHooks();
 testFunctionArguments('function arguments', false);
 testFunctionArguments('async function arguments', true);

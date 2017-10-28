@@ -19,6 +19,7 @@ so that developers can focus on delivering new features.
 # Getting started
 
 Parkes API Test requires **node v7.6.0** or higher for ES2015 and async function support.
+The tests will run in mocha or jest.
 
 ```
 npm install --save-dev parkes-api-test
@@ -80,9 +81,9 @@ All are optional except for `path`.
 Options marked * can be a (async) function in which case the return value of the function
 will be used. The functions are evaluated during test execution.
 
-Jest groups tests by the same name together, this could lead to unexpected results, so
-if you are testing the same route more than once, you should use `note` to differentiate
-the tests.
+Tests by the same name may be grouped within the same describe statement by your
+test runner, this could lead to unexpected results, so if you are testing the same
+route more than once, you should use `note` to differentiate the tests.
 
 ## Assumes nesting in data
 Expect and body by default assume that the API nests data objects within data.
