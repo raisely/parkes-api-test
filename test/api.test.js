@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint-disable object-curly-newline, object-property-newline */
+
 const server = require('./testServer');
 
 const chai = require('chai');
@@ -14,6 +16,7 @@ const describeApi = require('../');
 
 // Support jest or mocha
 const afterAll = global.afterAll || global.after;
+const beforeAll = global.beforeAll || global.before;
 
 const title = 'Speaking of Earth';
 const body = {
@@ -47,23 +50,25 @@ function assertRoute(res, route) {
 }
 
 function simpleApi() {
-	describeApi('api test', server, [
-		{ path: '/' },
-		{ method: 'DELETE', path: '/' },
-		{ path: '/error', status: 400 },
-		{ method: 'POST', path: '/reflect/body', name: '(in data)', body, expect: deepPartial },
-		{ method: 'POST', path: '/reflect/body', name: '(raw)', _body: rootBody, _expect: { keywords } },
-		{ method: 'GET', path: '/reflect/headers', headers, _expect: headers },
-		{ name: '(assert receives response)', path: '/', assertResponse },
-		{ name: '(assert receives resolved route)', path: '/', assertRoute },
-	]);
+	describe('api test', () => {
+		describeApi(server, [
+			{ path: '/' },
+			{ method: 'DELETE', path: '/' },
+			{ path: '/error', status: 400 },
+			{ method: 'POST', path: '/reflect/body', name: '(in data)', body, expect: deepPartial },
+			{ method: 'POST', path: '/reflect/body', name: '(raw)', _body: rootBody, _expect: { keywords } },
+			{ method: 'GET', path: '/reflect/headers', headers, _expect: headers },
+			{ name: '(assert receives response)', path: '/', assertResponse },
+			{ name: '(assert receives resolved route)', path: '/', assertRoute },
+		]);
+	});
 }
 
 function testHooks() {
 	describe('hooks', () => {
 		let hooks;
 
-		const hookNames = ['beforeAll', 'before', 'after'];
+		const hookNames = ['beforeApi', 'beforeRoute', 'afterRoute'];
 		const hookFn = {};
 		hookNames.forEach((hook) => {
 			hookFn[hook] = () => {
@@ -73,13 +78,13 @@ function testHooks() {
 			};
 		});
 
-		hookFn.afterAll = function afterAllHook() {
+		hookFn.afterApie = function afterAllHook() {
 			hooks.afterAll = true;
 		};
 
 		// Assert afterAll was called at the end of the suite
 		afterAll(() => {
-			chaiExpect(hooks).to.containSubset({ afterAll: true, after: true });
+			chaiExpect(hooks).to.containSubset({ afterApi: true, afterRoute: true });
 		});
 
 		function assertHook(response, route) {
@@ -88,15 +93,28 @@ function testHooks() {
 			chaiExpect(hooks).to.containSubset(expected);
 		}
 
-		describeApi(
-			'api', server, [
-				{ path: '/', name: 'beforeAll', assert: assertHook },
-				{ path: '/', name: 'before', before: hookFn.before, assert: assertHook },
-				{ path: '/', name: 'after', after: hookFn.after },
-			],
-			// eslint-disable-next-line comma-dangle
-			{ beforeAll: hookFn.beforeAll, afterAll: hookFn.afterAll }
-		);
+		describe('api context', () => {
+			beforeAll(() => {
+				hookFn.beforeApi();
+			});
+			afterAll(() => {
+				hookFn.beforeApi();
+			});
+
+			describeApi(server, [
+				{ path: '/', name: 'before all routes', describe: () => {
+					it('runs custom it', assertHook);
+				} },
+				{ path: '/', name: 'before this route', describe: () => {
+					beforeRoute(hookFn.beforeRoute);
+					it('runs custom it', assertHook);
+				} },
+				{ path: '/', name: 'after this route', describe: () => {
+					afterRoute(hookFn.afterRoute);
+					it('runs custom it', assertHook);
+				} },
+			]);
+		});
 	});
 }
 
@@ -109,6 +127,8 @@ function assertHeaders(res) {
 
 function testFunctionArguments(name, isAsync) {
 	const fnParams = {};
+	// Wrap dynamic parameters in a function
+	// so we can see if it's executed
 	Object.keys(params).forEach((param) => {
 		fnParams[param] = isAsync ?
 			async () => params[param] :
@@ -121,13 +141,35 @@ function testFunctionArguments(name, isAsync) {
 		_expect: fnParams.expect,
 	};
 
-	describeApi(name, server, [
-		Object.assign({ method: 'POST', name: '(wrapped)', assertHeaders }, fnParams),
-		Object.assign({ method: 'POST', name: '(raw)', assertHeaders }, rootPaths),
-	]);
+	const commonParams = {
+		method: 'POST',
+		describe: () => {
+			it('resolves header', assertHeaders);
+		},
+	};
+
+	describe(name, () => {
+		describeApi(server, [
+			Object.assign({ name: '(wrapped)' }, commonParams, fnParams),
+			Object.assign({ name: '(raw)' }, commonParams, rootPaths),
+		]);
+	});
+}
+
+function testNestedDescribeApi() {
+	describe('api', () => {
+		describeApi(server, '/reflect', [], () => {
+			describe('WHEN nested', () => {
+				describeApi([
+					{ method: 'POST', path: '/body' },
+				]);
+			});
+		});
+	});
 }
 
 simpleApi();
 testHooks();
 testFunctionArguments('function arguments', false);
 testFunctionArguments('async function arguments', true);
+testNestedDescribeApi();

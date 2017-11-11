@@ -2,7 +2,7 @@ Concise JSON API tests for node 7.6.0+
 
 Parkes API Test is built for the Parkes framework, but has no dependencies on
 parkes or koa so you can use it to test any node server that is supported by
-supertest.
+[supertest](https://www.npmjs.com/package/supertest).
 
 # Why?
 
@@ -33,21 +33,41 @@ const describeApi = require('../');
 
 const person = { name: 'Harvey Milk', state: 'California' };
 
-describeApi('my api', server, [
-  { path: '/health' },
-  { method: 'POST', path: '/people', body: person, expect: { state: 'California' } },
-  { path: '/people/1', expect: { name: 'Harvey Milk' } },
-  { path: '/admin', note: '(logged out)', status: 403 },
-  { path: '/admin', headers: { Authorization: `bearer ${token}` } },
-], { beforeAll, afterAll });
+describe('my api', () => {
+  describeApi(server, [
+    // GET /health, expect status == 200
+    { path: '/health' },
+    // POST /people with person body, response should contain { state: 'California' }
+    { method: 'POST', path: '/people', body: person, expect: { state: 'California' } },
+    // GET /people/1 response should contain { name: 'Harvey Milk' }
+    { path: '/people/1', expect: { name: 'Harvey Milk' } },
+    // GET /admin should return 403 error, (logged out) appended to test name
+    { path: '/admin', note: '(logged out)', status: 403 },
+    // GET /admin and send auth header, expect status == 200
+    { path: '/admin', headers: { Authorization: `bearer ${token}` } },
+  ]);
+});
 
-async function beforeAll() {
-  await init();
-}
+describe('RESTful api', () => {
+  describeApi(server, '/people', [
+    { }, // GET /people
+    { method: 'POST', body: person }, // POST /people
+    { method: 'PUT', path: '/1' },    // PUT /people/1
+  ],
+  () => {
+    context('WHEN not authorised', () => {
+      // assert GET /people returns 403 error
+      describeApi([ { status: 403 } ]);
+    });
 
-async function afterAll() {
-  await cleanUp();
-}
+    context('WHEN person owns pets', () => {
+      describeApi('/1/pets', () => {
+        // Expect GET /people/1/pets/1 to be Skippy the Bush Kangaroo
+        [{ path: '/1', expect: { name: 'Skippy', kind: 'Bush Kangaroo' }}],
+      });
+    })
+  });
+});
 ```
 
 ## What it tests
@@ -59,24 +79,25 @@ If `expect` is not defined, then only the status is checked.
 Body expectations use [chai-subset](https://github.com/debitoor/chai-subset) to
 do partial matching on the JSON return value.
 
+You can specify a prefix as the second parameter to describeApi that will be used for all
+paths.
+
 ## Defining routes to test
 `describeApi` takes an array of routes to test. Each route is defined by an object
 with the following keys.
 
-All are optional except for `path`.
+All are optional. An empty object will result in a test that GET / returns 200.
 
 | key | default | description |
 | --- | --- | ---- |
 | method | GET | The HTTP method |
-| path* | | Path to request |
-| name | `${method} ${path} (${note})` | Specify if you want to override the route name |
+| path* | '' | Path to request |
+| name | \`${method} ${path} (${note})\` | Specify if you want to override the route name |
 | note | | A helpful note to differentiate the route from others |
 | body* | | Body to send with the request |
 | expect* | | Partial object to match JSON body against |
 | headers* | | An object of headers to pass to the request |
-| before | | beforeEach hook for the test |
-| after | | Function to be run at the end of the test |
-| assert | | Custom method to assert something else about the route |
+| describe | | Callback to execute within the context of the routes describe block |
 
 Options marked * can be a (async) function in which case the return value of the function
 will be used. The functions are evaluated during test execution.
@@ -86,15 +107,18 @@ test runner, this could lead to unexpected results, so if you are testing the sa
 route more than once, you should use `note` to differentiate the tests.
 
 ## Assumes nesting in data
-Expect and body by default assume that the API nests data objects within data.
-If you to specify these objects without the data wrapper, use \_body and \_expect.
+Expect and body by default assume that the API nests the objects within a data attribute.
+If you want to specify these objects without the data wrapper, use \_body and \_expect.
 
 ```js
 routes = [{ '/', expect: person }];
 
 // Expects GET / to return
 {
-  data: { name: 'Harvey Milk', state: 'California' }
+  data: {
+    name: 'Harvey Milk',
+    state: 'California'
+  }
 }
 
 routes = [{ '/', _expect: person }];
@@ -106,49 +130,106 @@ routes = [{ '/', _expect: person }];
 
 ```
 
-# `after` and `assert`
-`after` and `assert` properties take functions of the form
+## Extending the describe blocks
+If you need more tests or hooks in the describe block for a particular test, use the describe
+callback.
 
-`function(response, resolvedRoute)`
+```js
+describe('my api', () => {
+  describeApi(server, [
+    { path: '/get_gookie', describe: () => {
+      it('returns a cookie', (response) => {
+        expect(response.headers.cookies).to.be.ok;
+      });
+    } },
+  });
+});
+```
+
+### afterRoute and beforeRoute
+To avoid confusion due to every route running only once in it's describe block,
+parkes-api-test defines beforeRoute and afterRoute which are essentially
+aliases for beforeAll and afterAll.
+
+### `afterRoute` and `it` inside a route's describe block
+
+Inside route describes, `afterRoute` and `it` functions are overridden to
+pass additional arguments to the callback should you need them.
+
+`it('', (response, resolvedRoute) => {})`
+`afterAll((response, resolvedRoute) => {})`
 
 `response` is the supertest response object
 
 `resolvedRoute` is a copy of the route object with all dynamic attributes resolved
 
+## Nesting blocks
+Because describe blocks are used, you can nest them as you would expect.
 
+You can also nest within a describe block for your router
 
+Nested describeApi's inherit the server and path from the above scope
+
+```js
+describe('my api', () => {
+  describeApi(server, '/people', [
+    { path: '/1' },
+  ],
+  () => {
+    describe('WHEN they have pets', () => {
+      describeApi('/1/pets', [
+        { path: '/1' }
+      ]);
+    });
+  });
+});
+```
 
 ## Under the hood
 
-The test runner sets up a `describe` block for the api, and a `describe` block for
-each route.
+The test runner sets up a `describe` block for each route.
+
+Each route is called during the **beforeAll** phase of the test. This is different from
+most test patterns, but in order to assert things about the result of a HTTP call
+you only need to make that call once.
 
 Each route will have one `it` block for asserting the return status and body of
 the route.
 
-If you define `assert` then a second `it` block is defined.
-This means that your route will be called _twice_ if you set up an `assert`.
+If you define `block` then all the `it` blocks logically sit within the describe
+block for that route.
 
 ```js
 
 // Example
-describeApi('my api', [
-  { path: '/' }
-], { beforeAll, afterAll });
-
-// Creates
-
 describe('my api', () => {
-  beforeAll(() => {
-    await options.beforeAll();
-  })
-  afterAll(() => {
-    await options.afterAll();
-  })
+  describeApi('/user', server, [
+    { expect: expectedJson, assert: () => {
+      it('passes response to it block', (response) => {
+        expect(response.status).to.be.ok;
+      });
+    } }
+  ]);
+});
 
-  describe('GET /', () => {
-    it('returns 200 with expected body', () => {});
-    it('custom assert', () => {});
+// Is the equivalent of
+describe('my api', () => {
+  describe('GET /user', () => {
+    let response;
+
+    beforeAll(() => {
+      response = await server.get('/');
+    })
+
+    it('status 200', () => {
+      expect(response.status).to.eq(200);
+    });
+    it('body is correct', () => {
+      expect(response.body).to.containSubset(expectedJson);
+    });
+    it('passes response to it block', (response) => {
+      expect(response.status).to.be.ok;
+    });
   });
 })
 ```
