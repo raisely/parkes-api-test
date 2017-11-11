@@ -1,6 +1,7 @@
 'use strict';
 
 /* eslint-disable object-curly-newline, object-property-newline */
+/* globals beforeRoute, afterRoute */
 
 const server = require('./testServer');
 
@@ -78,8 +79,8 @@ function testHooks() {
 			};
 		});
 
-		hookFn.afterApie = function afterAllHook() {
-			hooks.afterAll = true;
+		hookFn.afterApi = function afterAllHook() {
+			hooks.afterApi = true;
 		};
 
 		// Assert afterAll was called at the end of the suite
@@ -98,20 +99,19 @@ function testHooks() {
 				hookFn.beforeApi();
 			});
 			afterAll(() => {
-				hookFn.beforeApi();
+				hookFn.afterApi();
 			});
 
 			describeApi(server, [
-				{ path: '/', name: 'before all routes', describe: () => {
+				{ path: '/', name: 'beforeApi', describe: () => {
 					it('runs custom it', assertHook);
 				} },
-				{ path: '/', name: 'before this route', describe: () => {
+				{ path: '/', name: 'beforeRoute', describe: () => {
 					beforeRoute(hookFn.beforeRoute);
-					it('runs custom it', assertHook);
+					it('runs before route', assertHook);
 				} },
-				{ path: '/', name: 'after this route', describe: () => {
+				{ path: '/', name: 'afterRoute', describe: () => {
 					afterRoute(hookFn.afterRoute);
-					it('runs custom it', assertHook);
 				} },
 			]);
 		});
