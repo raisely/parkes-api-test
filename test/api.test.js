@@ -59,8 +59,12 @@ function simpleApi() {
 			{ method: 'POST', path: '/reflect/body', name: '(in data)', body, expect: deepPartial },
 			{ method: 'POST', path: '/reflect/body', name: '(raw)', _body: rootBody, _expect: { keywords } },
 			{ method: 'GET', path: '/reflect/headers', headers, _expect: headers },
-			{ name: '(assert receives response)', path: '/', assertResponse },
-			{ name: '(assert receives resolved route)', path: '/', assertRoute },
+			{ note: '(assert receives response)', path: '/', describe: () => {
+				it('passes response to "it"', assertResponse);
+			} },
+			{ note: '(assert receives resolved route)', path: '/', describe: () => {
+				it('passes route to "it"', assertRoute);
+			} },
 		]);
 	});
 }
