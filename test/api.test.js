@@ -126,7 +126,8 @@ const path = '/reflect/body';
 const params = { path, body, expect: { title }, headers };
 
 function assertHeaders(res) {
-	chaiExpect(res.headers).to.containSubset(headers);
+	// eslint-disable-next-line no-underscore-dangle
+	chaiExpect(res.req._headers).to.containSubset(headers);
 }
 
 function testFunctionArguments(name, isAsync) {
@@ -140,6 +141,7 @@ function testFunctionArguments(name, isAsync) {
 	});
 
 	const rootPaths = {
+		headers: fnParams.headers,
 		path: fnParams.path,
 		_body: fnParams.body,
 		_expect: fnParams.expect,
