@@ -95,7 +95,7 @@ All are optional. An empty object will result in a test that GET / returns 200.
 | name | \`${method} ${path} (${note})\` | Specify if you want to override the route name |
 | note | | A helpful note to differentiate the route from others |
 | body* | | Body to send with the request |
-| expect* | | Partial object to match JSON body against |
+| expect* | | Partial object to match JSON body against (can also be text) |
 | headers* | | An object of headers to pass to the request |
 | describe | | Callback to execute within the context of the routes describe block |
 
