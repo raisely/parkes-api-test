@@ -17,6 +17,11 @@ api
 		ctx.body = { error: 'You left the iron on' };
 		await next();
 	})
+	.get('/text-error', async (ctx, next) => {
+		ctx.status = 400;
+		ctx.body = 'Text error';
+		await next();
+	})
 	.post('/reflect/body', async (ctx, next) => {
 		ctx.body = ctx.request.body;
 		await next();

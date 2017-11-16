@@ -65,6 +65,7 @@ function simpleApi() {
 			{ note: '(assert receives resolved route)', path: '/', describe: () => {
 				it('passes route to "it"', assertRoute);
 			} },
+			{ path: '/text-error', status: 400, _expect: 'Text error' },
 		]);
 	});
 }
