@@ -1,6 +1,6 @@
 {
   "name": "parkes-api-test",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Concise JSON API testing",
   "main": "lib/describeApi.js",
   "scripts": {
