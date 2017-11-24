@@ -22,6 +22,10 @@ api
 		ctx.body = 'Text error';
 		await next();
 	})
+	.post('/reflect', async (ctx, next) => {
+		ctx.body = ctx.request.body;
+		await next();
+	})
 	.post('/reflect/body', async (ctx, next) => {
 		ctx.body = ctx.request.body;
 		await next();

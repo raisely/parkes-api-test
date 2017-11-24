@@ -54,7 +54,7 @@ function simpleApi() {
 	describe('api test', () => {
 		describeApi(server, [
 			{ path: '/' },
-			{ method: 'DELETE', path: '/' },
+			{ method: 'DELETE' },
 			{ path: '/error', status: 400 },
 			{ method: 'POST', path: '/reflect/body', name: '(in data)', body, expect: deepPartial },
 			{ method: 'POST', path: '/reflect/body', name: '(raw)', _body: rootBody, _expect: { keywords } },
@@ -169,6 +169,7 @@ function testNestedDescribeApi() {
 			describe('WHEN nested', () => {
 				describeApi([
 					{ method: 'POST', path: '/body' },
+					{ method: 'POST' },
 				]);
 			});
 		});
