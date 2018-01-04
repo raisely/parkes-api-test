@@ -51,6 +51,4 @@ app
 	.use(bodyParser())
 	.use(api.middleware());
 
-const server = app.listen(PORT);
-
-module.exports = server;
+module.exports = app;

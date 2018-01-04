@@ -3,7 +3,7 @@
 /* eslint-disable object-curly-newline, object-property-newline */
 /* globals beforeRoute, afterRoute */
 
-const server = require('./testServer');
+const app = require('./testServer');
 
 const chai = require('chai');
 const chaiSubset = require('chai-subset');
@@ -42,6 +42,8 @@ const headers = {
 	client: 'Parkes Test',
 };
 
+let server;
+
 function assertResponse(res) {
 	chaiExpect(res.req.path).to.equal('/');
 }
@@ -52,7 +54,7 @@ function assertRoute(res, route) {
 
 function simpleApi() {
 	describe('api test', () => {
-		describeApi(server, [
+		describeApi(getServer, [
 			{ path: '/' },
 			{ method: 'DELETE' },
 			{ path: '/error', status: 400 },
@@ -107,7 +109,7 @@ function testHooks() {
 				hookFn.afterApi();
 			});
 
-			describeApi(server, [
+			describeApi(getServer, [
 				{ path: '/', name: 'beforeApi', describe: () => {
 					it('runs custom it', assertHook);
 				} },
@@ -156,7 +158,7 @@ function testFunctionArguments(name, isAsync) {
 	};
 
 	describe(name, () => {
-		describeApi(server, [
+		describeApi(getServer, [
 			Object.assign({ name: '(wrapped)' }, commonParams, fnParams),
 			Object.assign({ name: '(raw)' }, commonParams, rootPaths),
 		]);
@@ -165,7 +167,7 @@ function testFunctionArguments(name, isAsync) {
 
 function testNestedDescribeApi() {
 	describe('api', () => {
-		describeApi(server, '/reflect', [], () => {
+		describeApi(getServer, '/reflect', [], () => {
 			describe('WHEN nested', () => {
 				describeApi([
 					{ method: 'POST', path: '/body' },
@@ -175,6 +177,21 @@ function testNestedDescribeApi() {
 		});
 	});
 }
+
+function getServer() {
+	if (!server) {
+		server = app.listen();
+	}
+
+	return server;
+}
+
+afterAll(() => {
+	if (server) {
+		server.close();
+		server = null;
+	}
+})
 
 simpleApi();
 testHooks();
