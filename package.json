@@ -5,6 +5,7 @@
   "main": "lib/describeApi.js",
   "scripts": {
     "test": "npm run jest && npm run mocha",
+    "lint": "eslint .",
     "jest": "jest",
     "mocha": "mocha"
   },
