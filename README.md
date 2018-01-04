@@ -97,7 +97,7 @@ All are optional. An empty object will result in a test that GET / returns 200.
 | body* | | Body to send with the request |
 | expect* | | Partial object to match JSON body against (can also be text) |
 | headers* | | An object of headers to pass to the request |
-| describe | | Callback to execute within the context of the routes describe block |
+| describe | | Callback to execute within the context of the route's describe block |
 
 Options marked * can be a (async) function in which case the return value of the function
 will be used. The functions are evaluated during test execution.
