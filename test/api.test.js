@@ -191,7 +191,7 @@ afterAll(() => {
 		server.close();
 		server = null;
 	}
-})
+});
 
 simpleApi();
 testHooks();
