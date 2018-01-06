@@ -4,8 +4,6 @@ const Koa = require('koa');
 const KoaRouter = require('koa-router');
 const bodyParser = require('koa-bodyparser');
 
-const PORT = process.env.PORT || 3001;
-
 const api = new KoaRouter();
 api
 	.all('/', async (ctx, next) => {
