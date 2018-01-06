@@ -28,13 +28,15 @@ npm install --save-dev parkes-api-test
 Then in your `test/api/test.js`
 
 ```js
-const server = require('../../server');
+const app = require('../../app.js');
 const describeApi = require('../');
 
 const person = { name: 'Harvey Milk', state: 'California' };
 
 describe('my api', () => {
-  describeApi(server, [
+  const getServer = describeApi.autorun(app);
+
+  describeApi(getServer, [
     // GET /health, expect status == 200
     { path: '/health' },
     // POST /people with person body, response should contain { state: 'California' }
@@ -49,13 +51,15 @@ describe('my api', () => {
 });
 
 describe('RESTful api', () => {
-  describeApi(server, '/people', [
+  describeApi(getServer, '/people', [
     { }, // GET /people
     { method: 'POST', body: person }, // POST /people
     { method: 'PUT', path: '/1' },    // PUT /people/1
   ],
   () => {
     context('WHEN not authorised', () => {
+      // NOTE nested calls to describeApi do not require getServer to
+      // be passed in again
       // assert GET /people returns 403 error
       describeApi([ { status: 403 } ]);
     });
@@ -74,19 +78,20 @@ describe('RESTful api', () => {
 `describeApi` will check that the route returns the expected status code (200 by default)
 and that the JSON returned contains at least the properties in the `expect` object.
 
-If `expect` is not defined, then only the status is checked.
+If `expect` is not included in the options, then only the status is checked.
 
 Body expectations use [chai-subset](https://github.com/debitoor/chai-subset) to
 do partial matching on the JSON return value.
 
-You can specify a prefix as the second parameter to describeApi that will be used for all
+You can specify a url prefix as the second parameter to describeApi that will be used for all
 paths.
 
 ## Defining routes to test
 `describeApi` takes an array of routes to test. Each route is defined by an object
 with the following keys.
 
-All are optional. An empty object will result in a test that GET / returns 200.
+All are optional. An empty object will result in a test that calls GET / expects a
+return status of 200.
 
 | key | default | description |
 | --- | --- | ---- |
@@ -106,7 +111,7 @@ Tests by the same name may be grouped within the same describe statement by your
 test runner, this could lead to unexpected results, so if you are testing the same
 route more than once, you should use `note` to differentiate the tests.
 
-## Assumes nesting in data
+## Payloads always in `data`
 Expect and body by default assume that the API nests the objects within a data attribute.
 If you want to specify these objects without the data wrapper, use \_body and \_expect.
 
@@ -130,6 +135,29 @@ routes = [{ '/', _expect: person }];
 
 ```
 
+## Passing the server in via a function
+Because tests may want to spin up the server within before and after blocks
+describeApi takes a function that returns the server.
+
+When a route is executed getServer() will be called.
+
+To simplify this setup, describeApi provides a helper function `autorun`
+which will run the necessary `before` and `after` blocks to start up the
+server and close it again when done.
+
+Autorun expects an `app` that behaves like a koa app (returns a HttpServer from
+`app.listen()`)
+
+```js
+const app = require('koa')();
+
+app.use(myMiddleware);
+
+const getServer = describeApi.autorun(app);
+
+describeApi(getServer, ...)
+```
+
 ## Extending the describe blocks
 If you need more tests or hooks in the describe block for a particular test, use the describe
 callback.
@@ -137,11 +165,14 @@ callback.
 ```js
 describe('my api', () => {
   describeApi(server, [
-    { path: '/get_gookie', describe: () => {
-      it('returns a cookie', (response) => {
-        expect(response.headers.cookies).to.be.ok;
-      });
-    } },
+    {
+      path: '/get_gookie',
+      describe: () => {
+        it('returns a cookie', (response) => {
+          expect(response.headers.cookies).to.be.ok;
+        });
+      }
+    },
   });
 });
 ```
@@ -149,7 +180,7 @@ describe('my api', () => {
 ### afterRoute and beforeRoute
 To avoid confusion due to every route running only once in it's describe block,
 parkes-api-test defines beforeRoute and afterRoute which are essentially
-aliases for beforeAll and afterAll.
+aliases for before(All) and after(All).
 
 ### `afterRoute` and `it` inside a route's describe block
 
@@ -168,7 +199,7 @@ Because describe blocks are used, you can nest them as you would expect.
 
 You can also nest within a describe block for your router
 
-Nested describeApi's inherit the server and path from the above scope
+Nested describeApi's inherit the getServer method and path from the above scope
 
 ```js
 describe('my api', () => {
@@ -203,7 +234,7 @@ block for that route.
 
 // Example
 describe('my api', () => {
-  describeApi('/user', server, [
+  describeApi(getServer, '/user', [
     { expect: expectedJson, assert: () => {
       it('passes response to it block', (response) => {
         expect(response.status).to.be.ok;
@@ -218,7 +249,7 @@ describe('my api', () => {
     let response;
 
     beforeAll(() => {
-      response = await server.get('/');
+      response = await getServer().get('/');
     })
 
     it('status 200', () => {
@@ -234,8 +265,13 @@ describe('my api', () => {
 })
 ```
 
+## Known Issues
+Using `mocha -w` is currently broken as the before hooks do not run on subsequent
+runs.
+(The same problem does not occur when using Jest)
+
 # License
 
 © 2017 Agency Ventures
 
-Licensed under the KWPL license.  See [`LICENSE.md`](https://github.com/raisely/parkes-api-test/blob/master/LICENSE.md) for details.
+Licensed under the JWL license.  See [`LICENSE.md`](https://github.com/raisely/parkes-api-test/blob/master/LICENSE.md) for details.
