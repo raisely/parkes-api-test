@@ -83,6 +83,10 @@ If `expect` is not included in the options, then only the status is checked.
 Body expectations use [chai-subset](https://github.com/debitoor/chai-subset) to
 do partial matching on the JSON return value.
 
+If you're using jest, it's highly recommended you install the optional dependency
+[chai-subset-jest-diff](https://github.com/raisely/chai-subset-jest-diff) so
+that your test reports have nicely formatted diffs
+
 You can specify a url prefix as the second parameter to describeApi that will be used for all
 paths.
 
@@ -179,7 +183,7 @@ describe('my api', () => {
 
 ### afterRoute and beforeRoute
 To avoid confusion due to every route running only once in it's describe block,
-parkes-api-test defines beforeRoute and afterRoute which are essentially
+parkes-api-test defines `beforeRoute` and `afterRoute` which are essentially
 aliases for before(All) and after(All).
 
 ### `afterRoute` and `it` inside a route's describe block
@@ -199,7 +203,7 @@ Because describe blocks are used, you can nest them as you would expect.
 
 You can also nest within a describe block for your router
 
-Nested describeApi's inherit the getServer method and path from the above scope
+Nested describeApi's inherit the `getServer` method and path from the above scope
 
 ```js
 describe('my api', () => {
@@ -224,7 +228,7 @@ Each route is called during the **beforeAll** phase of the test. This is differe
 most test patterns, but in order to assert things about the result of a HTTP call
 you only need to make that call once.
 
-Each route will have one `it` block for asserting the return status and body of
+Each route will have one `it` block for asserting the return status and body content of
 the route.
 
 If you define `block` then all the `it` blocks logically sit within the describe
@@ -235,7 +239,7 @@ block for that route.
 // Example
 describe('my api', () => {
   describeApi(getServer, '/user', [
-    { expect: expectedJson, assert: () => {
+    { expect: expectedJson, describe: () => {
       it('passes response to it block', (response) => {
         expect(response.status).to.be.ok;
       });
