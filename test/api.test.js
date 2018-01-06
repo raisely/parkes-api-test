@@ -42,7 +42,7 @@ const headers = {
 	client: 'Parkes Test',
 };
 
-let server;
+const getServer = describeApi.autorun(app);
 
 function assertResponse(res) {
 	chaiExpect(res.req.path).to.equal('/');
@@ -177,21 +177,6 @@ function testNestedDescribeApi() {
 		});
 	});
 }
-
-function getServer() {
-	if (!server) {
-		server = app.listen();
-	}
-
-	return server;
-}
-
-afterAll(() => {
-	if (server) {
-		server.close();
-		server = null;
-	}
-});
 
 simpleApi();
 testHooks();
