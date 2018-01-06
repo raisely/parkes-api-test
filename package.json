@@ -46,7 +46,7 @@
   "devDependencies": {
     "babel-eslint": "^8.0.1",
     "body-parser": "^1.18.2",
-    "chai-subset-jest-diff": "file:../chai-subset-jest-diff",
+    "chai-subset-jest-diff": "raisely/chai-subset-jest-diff",
     "eslint": "^4.9.0",
     "eslint-config-airbnb": "^16.1.0",
     "eslint-plugin-import": "^2.8.0",
