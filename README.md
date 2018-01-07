@@ -225,8 +225,8 @@ describe('my api', () => {
 The test runner sets up a `describe` block for each route.
 
 Each route is called during the **beforeAll** phase of the test. This is different from
-most test patterns, but in order to assert things about the result of a HTTP call
-you only need to make that call once.
+most test patterns, but in order to assert things about the result of a HTTP request
+you only need to make that request once.
 
 Each route will have one `it` block for asserting the return status and body content of
 the route.
