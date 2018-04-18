@@ -34,11 +34,13 @@
       "email": "chris@agency.sc"
     },
     {
-      "name": "Paul Day",
-      "email": "paul@agency.sc"
+      "name": "Flynn Buckingham"
+    },
+    {
+      "name": "Paul Day"
     }
   ],
-  "license": "KWPL",
+  "license": "JWL",
   "bugs": {
     "url": "https://github.com/raisely/parkes-router/issues"
   },
