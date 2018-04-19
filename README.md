@@ -43,7 +43,7 @@ describe('my api', () => {
     { method: 'POST', path: '/people', body: person, expect: { state: 'California' } },
     // GET /people/1 response should contain { name: 'Harvey Milk' }
     { path: '/people/1', expect: { name: 'Harvey Milk' } },
-    // GET /admin should return 403 error, (logged out) appended to test name
+    // GET /admin should return 403 error, (logged out) will be appended to test name
     { path: '/admin', note: '(logged out)', status: 403 },
     // GET /admin and send auth header, expect status == 200
     { path: '/admin', headers: { Authorization: `bearer ${token}` } },
