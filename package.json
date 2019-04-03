@@ -1,6 +1,6 @@
 {
   "name": "parkes-api-test",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "Concise JSON API testing",
   "main": "lib/describeApi.js",
   "scripts": {
@@ -31,7 +31,7 @@
   "contributors": [
     {
       "name": "Chris Jensen",
-      "email": "chris@agency.sc"
+      "email": "chris@raisely.com"
     },
     {
       "name": "Flynn Buckingham"
