@@ -1,7 +1,8 @@
 Concise JSON API tests for node 7.6.0+
 
-Parkes API Test is built for the Parkes framework, but has no dependencies on
-parkes or koa so you can use it to test any node server that is supported by
+Describe API (originally parkes-api-test) was built for the Parkes framework,
+but has no dependencies on parkes or koa so was renamed to express that you can
+use it to test any node server that is supported by
 [supertest](https://www.npmjs.com/package/supertest).
 
 # Why?
@@ -33,10 +34,16 @@ const describeApi = require('../');
 
 const person = { name: 'Harvey Milk', state: 'California' };
 
+// Use route modifiers to define things you set on (almost) every route
+// Set custom variables on your routes by prefixing them with $
+describeApi.addModifier((route) => {
+  if (route.$user) route.bearer = getTokenFor(route.$user);
+})
+
 describe('my api', () => {
   const getServer = describeApi.autorun(app);
 
-  describeApi(getServer, [
+  describeApi({ server: getServer, routeModifier: setUser, routes: [
     // GET /health, expect status == 200
     { path: '/health' },
     // POST /people with person body, response should contain { state: 'California' }
@@ -46,8 +53,14 @@ describe('my api', () => {
     // GET /admin should return 403 error, (logged out) will be appended to test name
     { path: '/admin', note: '(logged out)', status: 403 },
     // GET /admin and send auth header, expect status == 200
-    { path: '/admin', headers: { Authorization: `bearer ${token}` } },
-  ]);
+    { path: '/admin', bearer: token } },
+    // GET /sitemap send a custom header
+    { path: '/sitemap', headers: { client: 'I am a robot' } },
+
+    // The route modifier added above will set bearer attribute on the route to Bob's token
+    // which will in turn cause describeApi to pass the header Authorization: Bearer <bob's token>
+    { path: '/me', $user: 'Bob' },
+  ] });
 });
 
 describe('RESTful api', () => {
@@ -59,7 +72,8 @@ describe('RESTful api', () => {
   () => {
     context('WHEN not authorised', () => {
       // NOTE nested calls to describeApi do not require getServer to
-      // be passed in again
+      // be passed in again and use the path prefix from above
+
       // assert GET /people returns 403 error
       describeApi([ { status: 403 } ]);
     });
@@ -102,10 +116,12 @@ return status of 200.
 | method | GET | The HTTP method |
 | path* | '' | Path to request |
 | name | \`${method} ${path} (${note})\` | Specify if you want to override the route name |
+| status | 200 | Expected status code from the server |
 | note | | A helpful note to differentiate the route from others |
 | body* | | Body to send with the request |
 | expect* | | Partial object to match JSON body against (can also be text) |
 | headers* | | An object of headers to pass to the request |
+| bearer | | Token to set in the Authorization: Bearer header |
 | describe | | Callback to execute within the context of the route's describe block |
 
 Options marked * can be a (async) function in which case the return value of the function
@@ -143,7 +159,7 @@ routes = [{ '/', _expect: person }];
 Because tests may want to spin up the server within before and after blocks
 describeApi takes a function that returns the server.
 
-When a route is executed getServer() will be called.
+When a route is executed that function will be called to retrieve the server.
 
 To simplify this setup, describeApi provides a helper function `autorun`
 which will run the necessary `before` and `after` blocks to start up the
@@ -183,7 +199,7 @@ describe('my api', () => {
 
 ### afterRoute and beforeRoute
 To avoid confusion due to every route running only once in it's describe block,
-parkes-api-test defines `beforeRoute` and `afterRoute` which are essentially
+parkes-api-test defines `beforeRoute` and `afterRoute` which are
 aliases for before(All) and after(All).
 
 ### `afterRoute` and `it` inside a route's describe block
@@ -196,7 +212,7 @@ pass additional arguments to the callback should you need them.
 
 `response` is the supertest response object
 
-`resolvedRoute` is a copy of the route object with all dynamic attributes resolved
+`resolvedRoute` is a copy of the route object with all dynamic attributes and any route modifiers resolved
 
 ## Nesting blocks
 Because describe blocks are used, you can nest them as you would expect.
@@ -225,13 +241,13 @@ describe('my api', () => {
 The test runner sets up a `describe` block for each route.
 
 Each route is called during the **beforeAll** phase of the test. This is different from
-most test patterns, but in order to assert things about the result of a HTTP request
-you only need to make that request once.
+most test patterns, but this has the benefit that in order to assert things about the
+result of a HTTP request you only need to make that request once.
 
 Each route will have one `it` block for asserting the return status and body content of
 the route.
 
-If you define `block` then all the `it` blocks logically sit within the describe
+If you define `describe` then all the `it` blocks logically sit within the describe
 block for that route.
 
 ```js
