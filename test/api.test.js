@@ -54,7 +54,7 @@ function assertRoute(res, route) {
 
 function simpleApi() {
 	describe('api test', () => {
-		describeApi(getServer, [
+		describeApi({ server: getServer, routes: [
 			{ path: '/' },
 			{ method: 'DELETE' },
 			{ path: '/error', status: 400 },
@@ -68,7 +68,7 @@ function simpleApi() {
 				it('passes route to "it"', assertRoute);
 			} },
 			{ path: '/text-error', status: 400, _expect: 'Text error' },
-		]);
+		] });
 	});
 }
 
@@ -109,7 +109,7 @@ function testHooks() {
 				hookFn.afterApi();
 			});
 
-			describeApi(getServer, [
+			describeApi({ server: getServer, routes: [
 				{ path: '/', name: 'beforeApi', describe: () => {
 					it('runs custom it', assertHook);
 				} },
@@ -120,7 +120,7 @@ function testHooks() {
 				{ path: '/', name: 'afterRoute', describe: () => {
 					afterRoute(hookFn.afterRoute);
 				} },
-			]);
+			] });
 		});
 	});
 }
@@ -178,8 +178,26 @@ function testNestedDescribeApi() {
 	});
 }
 
+function testModifiers() {
+	describe('route modifiers', () => {
+		const setUser = route => Object.assign({
+			bearer: route.user,
+		}, route);
+
+		describeApi({ server: getServer, routeModifier: setUser, routes: [
+			{
+				method: 'GET', path: '/reflect/headers', user: 'bob', headers, _expect: {
+					client: 'Parkes Test',
+					authorization: 'Bearer bob',
+				},
+			},
+		] });
+	});
+}
+
 simpleApi();
 testHooks();
 testFunctionArguments('function arguments', false);
 testFunctionArguments('async function arguments', true);
 testNestedDescribeApi();
+testModifiers();
